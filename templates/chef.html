@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Chef page</title>
+  </head>
+  <body>
+    <p>CHEF PAGE</p>
+    {% if logged %}
+    <p>Hello there! Welcome {{username}}!</p>
+    <form action="/logout">
+      <input type = "submit" value = "Logout">
+    </form>
+    {% endif %}
+  </body>
+</html>
