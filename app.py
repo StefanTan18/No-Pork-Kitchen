@@ -7,6 +7,11 @@ app = Flask(__name__)
 user = "bob"
 pswd = "bobby"
 type = "customer"
+name = "Stefan Tan"
+address = "160 Convent Ave, New York, NY"
+currentBalance = 50
+warning = 2
+isVIP = True
 
 @app.route("/")
 def home():
@@ -55,11 +60,59 @@ def register():
 	except:
 		return render_template('register.html')
 
-# @app.route("/auth")
-# def authorization():
-# 	session["username"] = request.args["username"] # stores username
-# 	session["password"] = request.args["password"] # stores password
-# 	return redirect(url_for("home"))
+@app.route("/profile", methods=['POST', 'GET'])
+def profile():
+	balance = 50 # test intial balance, balance = currentBalance gets UnboundLocalError: local variable 'currentBalance' referenced before assignment
+	if 'username' in session:
+		try:
+			if type == 'customer':
+				addedBalance = int(request.form['addedBalance'])
+				if addedBalance > 0:
+					balance += addedBalance
+					currentBalance = balance
+					return render_template('profile.html',
+									isCustomer = True,
+									VIP = isVIP,
+									username = session['username'], 
+									name = name,
+									role = type, 
+									address = address,
+									warning = warning,
+									balance = balance)
+			else:
+				return render_template('profile.html',
+									isCustomer = False,
+									VIP = False,
+									username = session['username'],
+									name = name,
+									role = type, 
+									address = address,
+									warning = warning)
+
+		except:
+			if type == 'customer':
+				return render_template('profile.html',
+									isCustomer = True,
+									VIP = isVIP,
+									username = session['username'], 
+									name = name,
+									role = type, 
+									address = address,
+									warning = warning,
+									balance = balance)
+			else:
+				return render_template('profile.html',
+									isCustomer = False,
+									VIP = False,
+									username = session['username'],
+									name = name,
+									role = type, 
+									address = address,
+									warning = warning)
+
+	else:
+		return redirect(url_for('home'))
+
 
 @app.route("/logout")
 def logout():
