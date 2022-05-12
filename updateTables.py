@@ -265,25 +265,25 @@ def changeVIP(userid,vip):
     mydb.commit()
 
 #############################################################################################
-#---------------------------------------Orders-----------------------------------------------
+#-----------------------------------------Menu-----------------------------------------------
 #############################################################################################
 
 #Get all food
 def getAllItems():
-    mycursor.execute("SELECT * FROM Food");
-    result = mycursor.fetchall();
+    mycursor.execute("SELECT * FROM Food")
+    result = mycursor.fetchall()
     print (result)
     return result
 #Get all beverages,appetizers,entrees,others
 def getAllOfType(type):
-    mycursor.execute("SELECT * FROM Food WHERE type = "+type);
-    result = mycursor.fetchall();
+    mycursor.execute("SELECT * FROM Food WHERE itemtype = '%s'" % type)
+    result = mycursor.fetchall()
     print (result)
     return result
 #Add item (id,price,name,description,type,image)
 def addItem(id,price,name,description,type,image):
     try:
-        sql = "INSERT INTO Food (item_no,price,name,description,type,no_sold,image) VALUES (%s, %s, %s, %s, %s, %s, %s)"
+        sql = "INSERT INTO Food (item_no,price,name,description,itemtype,no_sold,image) VALUES (%s, %s, %s, %s, %s, %s, %s)"
         val = (id,price,name,description,type,0,image)
         mycursor.execute(sql, val)
         mydb.commit()
@@ -295,17 +295,42 @@ def addItem(id,price,name,description,type,image):
     except:
         print("An exception occurred.")
         return False
-#Update item (id, description, new rating, no_sold, image)
+#Update item description(id, description)
 def updateItemDescription(id, description):
     sql = "UPDATE Food SET description = %s WHERE item_no = %s"
     val = (description,id)
     mycursor.execute(sql, val)
     mydb.commit()
+#Update item image(id, image)
+def updateItemImage(id, image):
+    sql = "UPDATE Food SET image = %s WHERE item_no = %s"
+    val = (image,id)
+    mycursor.execute(sql, val)
+    mydb.commit()
+#Update rating with new rating from completed order
+def updateRating(id,new_rating):
+    sql = "SELECT rating, no_sold FROM Food Where item_no = " + str(id)
+    mycursor.execute(sql)
+    result = mycursor.fetchall()[0]
+    tmp_rating = 0
+    if (result[0] == None):
+        tmp_rating = new_rating
+    else:
+        tmp_rating = (result[0]*result[1] + new_rating) / (result[1]+1)
+    sql = "UPDATE Food SET rating = %s, no_sold = no_sold+1 WHERE item_no = %s"
+    val = (tmp_rating,id)
+    mycursor.execute(sql,val)
+    mydb.commit()
+    print (result)
 #Delete item(id)
 def deleteItem(id):
-    sql = "DELETE FROM Food WHERE item_no = " + id
+    sql = "DELETE FROM Food WHERE item_no = " + str(id)
     mycursor.execute(sql)
     mydb.commit()
+
+#############################################################################################
+#-----------------------------------------ORDERS---------------------------------------------
+#############################################################################################
 
 #Get all orders
 #Get all incomplete orders
