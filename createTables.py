@@ -14,13 +14,13 @@ mycursor.execute("DROP TABLE IF EXISTS SystemLog")
 mycursor.execute("DROP TABLE IF EXISTS Merit")
 mycursor.execute("DROP TABLE IF EXISTS OrderItems")
 mycursor.execute("DROP TABLE IF EXISTS Orders")
+mycursor.execute("DROP TABLE IF EXISTS Food")
 mycursor.execute("DROP TABLE IF EXISTS Discussions")
 mycursor.execute("DROP TABLE IF EXISTS Users")
 mycursor.execute("DROP TABLE IF EXISTS Managers")
 mycursor.execute("DROP TABLE IF EXISTS Chefs")
 mycursor.execute("DROP TABLE IF EXISTS Delivery")
 mycursor.execute("DROP TABLE IF EXISTS Customers")
-mycursor.execute("DROP TABLE IF EXISTS Food")
 
 #------------------------------USERS TABLE------------------------------------
 Attributes = """(userID INT PRIMARY KEY,
@@ -28,6 +28,7 @@ Attributes = """(userID INT PRIMARY KEY,
                     username VARCHAR(32) UNIQUE NOT NULL,
                     password VARCHAR(32) NOT NULL,
                     userType VARCHAR(20) NOT NULL,
+                    status VARCHAR(20) NOT NULL,
                     flag INT)"""
 mycursor.execute("CREATE TABLE Users " + Attributes)
 #MANAGER TABLE
@@ -59,9 +60,11 @@ Attributes = """(item_no INT PRIMARY KEY,
                     price DECIMAL(10,2) NOT NULL, 
                     name VARCHAR(20) UNIQUE NOT NULL,
                     description VARCHAR(100),
-                    type VARCHAR(10),
-                    rating INT,
+                    itemtype VARCHAR(10),
+                    rating FLOAT,
                     no_sold INT,
+                    chefID INT,
+                    FOREIGN KEY (chefID) references Chefs(userID),
                     image VARCHAR(2083))"""
 mycursor.execute("CREATE TABLE Food " + Attributes)
 
@@ -80,14 +83,12 @@ mycursor.execute("CREATE TABLE Orders " + Attributes)
 #------------------------------OrderItems TABLE-------------------------------
 Attributes = """(order_no INT,
                     item_no INT,
-                    chefID INT NOT NULL,
                     price DECIMAL(10,2) NOT NULL,
                     quantity INT NOT NULL,
                     item_rating INT,
                     item_review VARCHAR(1000),
                     PRIMARY KEY (order_no,item_no),
-                    FOREIGN KEY (order_no) references Orders(order_no),
-                    FOREIGN KEY (chefID) references Chefs(userID))"""
+                    FOREIGN KEY (order_no) references Orders(order_no) ON DELETE CASCADE)"""
 mycursor.execute("CREATE TABLE OrderItems " + Attributes)
 
 #------------------------------Forum TABLE------------------------------------
@@ -103,7 +104,7 @@ mycursor.execute("CREATE TABLE Discussions " + Attributes)
 Attributes = """(entry_no INT PRIMARY KEY,
                     id INT NOT NULL,
                     reviewer INT NOT NULL,
-                    type INT NOT NULL,
+                    reviewtype INT NOT NULL,
                     critique VARCHAR(1000) NOT NULL, 
                     verdict VARCHAR(1000),
                     status INT NOT NULL,

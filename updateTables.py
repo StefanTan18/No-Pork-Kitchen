@@ -1,34 +1,50 @@
-from tabnanny import check
-from unicodedata import decimal
-from venv import create
-from webbrowser import get
+from turtle import pos
 import mysql.connector
 from mysqlx import IntegrityError
 
-mydb = mysql.connector.connect(
-    host = "localhost",
-    user = "root",
-    password = "Youshallnotpass!", # Change accordingly
-    database = "NoPorkKitchenDB"
-)
+def init():
+    global mydb, mycursor
+    mydb = mysql.connector.connect(
+        host = "localhost",
+        user = "root",
+        password = "Youshallnotpass!", # Change accordingly
+        database = "NoPorkKitchenDB"
+    )
+    mycursor = mydb.cursor()
 
-mycursor = mydb.cursor()
-
+def close():
+    mycursor.close()
+    mydb.close()
 ############################################################################################
 #---------------------------------------USERS-----------------------------------------------
 ############################################################################################
 
 #Get all Users
 def getAllUsers():
-    mycursor.execute("SELECT * FROM Users");
-    result = mycursor.fetchall();
+    mycursor.execute("SELECT * FROM Users")
+    result = mycursor.fetchall()
     print (result)
     return result
+def getAllPendingUsers():
+    mycursor.execute("SELECT * FROM Users WHERE status = 'pending'")
+    result = mycursor.fetchall()
+    print (result)
+    return result
+def getAllFlaggedUsers():
+    mycursor.execute("SELECT * FROM Users WHERE flag = 1")
+    result = mycursor.fetchall()
+    print (result)
+    return result
+def setFlagforID(userID,value):
+    sql = "UPDATE Users SET flag = %s WHERE userID = %s"
+    val = (value,userID)
+    mycursor.execute(sql,val)
+    mydb.commit()
 #Check credentials (username,password)
 def checkCredentials(username,password):
     try:
         mycursor.execute("Select password FROM Users WHERE username = '"+username+"'")
-        result = mycursor.fetchone();
+        result = mycursor.fetchone()
         if (result[0] != password):
             #print (result)
             print ("Invalid username or password")
@@ -42,8 +58,8 @@ def checkCredentials(username,password):
 #Create User (id,username,name,password,usertype)
 def createUser(id,username,name,password,usertype):
     try:
-        sql = "INSERT INTO Users (userID,name,username,password,usertype, flag) VALUES (%s, %s, %s, %s, %s, %s)"
-        val = (id,name,username,password,usertype+"pending",0)
+        sql = "INSERT INTO Users (userID,name,username,password,usertype,status,flag) VALUES (%s, %s, %s, %s, %s, %s, %s)"
+        val = (id,name,username,password,usertype,"pending",0)
         mycursor.execute(sql, val)
         mydb.commit()
         print("Account Created Succesfully")
@@ -51,41 +67,61 @@ def createUser(id,username,name,password,usertype):
     except IntegrityError:
         print("Username already exists. Please try another.")
         return False
-    except:
+    except Exception as e:
         print("An exception occurred.")
+        print(e)
         return False
 #Change UserType - Ban/Register/etc. (userid, status)
 def updateUserType(userid,status):
-    sql = "UPDATE Users SET userType = %s WHERE userID = %s"
+    sql = "UPDATE Users SET status = %s WHERE userID = %s"
     val = (status,userid)
     mycursor.execute(sql, val)
-    if (status=="manager"):
-        #add to manager table
-        sql = "INSERT INTO Managers (userID,salary,hours_worked) VALUES (%s, %s, %s)"
-        val = (userid,0,0)
-        mycursor.execute(sql, val)
-    if(status=="customer"):
-        #add to customer table
-        sql = "INSERT INTO Customers (userID,balance,address,VIP_STATUS) VALUES (%s, %s, %s, %s)"
-        val = (userid,0,0,0)
-        mycursor.execute(sql, val)
-    if(status=="chef"):
-        #add to chef table
-        sql = "INSERT INTO Chefs (userID,salary,hours_worked) VALUES (%s, %s, %s)"
-        val = (userid,0,0)
-        mycursor.execute(sql, val)
-    if(status=="delivery"):
-        #add to chef table
-        sql = "INSERT INTO Delivery (userID,distance,earnings,no_deliveries) VALUES (%s, %s, %s, %s)"
-        val = (userid,0,0,0)
-        mycursor.execute(sql, val)
+    if status =="approved":
+        mycursor.execute("SELECT usertype FROM Users WHERE userID= " + str(userid))
+        userT = mycursor.fetchone()[0]
+        if (userT=="manager"):
+            #add to manager table
+            sql = "INSERT INTO Managers (userID,salary,hours_worked) VALUES (%s, %s, %s)"
+            val = (userid,0,0)
+            mycursor.execute(sql, val)
+            #add to merit table
+            sql = "INSERT INTO Merit (id,merit) VALUES (%s, %s)"
+            val = (userid,0)
+            mycursor.execute(sql, val)
+        if(userT=="customer"):
+            #add to customer table
+            sql = "INSERT INTO Customers (userID,balance,address,VIP_STATUS) VALUES (%s, %s, %s, %s)"
+            val = (userid,0,0,0)
+            mycursor.execute(sql, val)
+            #add to merit table
+            sql = "INSERT INTO Merit (id,merit) VALUES (%s, %s)"
+            val = (userid,0)
+            mycursor.execute(sql, val)
+        if(userT=="chef"):
+            #add to chef table
+            sql = "INSERT INTO Chefs (userID,salary,hours_worked) VALUES (%s, %s, %s)"
+            val = (userid,0,0)
+            mycursor.execute(sql, val)
+            #add to merit table
+            sql = "INSERT INTO Merit (id,merit) VALUES (%s, %s)"
+            val = (userid,0)
+            mycursor.execute(sql, val)
+        if(userT=="delivery"):
+            #add to chef table
+            sql = "INSERT INTO Delivery (userID,distance,earnings,no_deliveries) VALUES (%s, %s, %s, %s)"
+            val = (userid,0,0,0)
+            mycursor.execute(sql, val)
+            #add to merit table
+            sql = "INSERT INTO Merit (id,merit) VALUES (%s, %s)"
+            val = (userid,0)
+            mycursor.execute(sql, val)
     mydb.commit()
 
 #---------------------------------------Manager-----------------------------------------------
 #Get all Managers
 def getAllManagers():
-    mycursor.execute("SELECT * FROM Managers");
-    result = mycursor.fetchall();
+    mycursor.execute("SELECT * FROM Managers")
+    result = mycursor.fetchall()
     print (result)
     return result
 #Change salary (userid, newsalary)
@@ -117,7 +153,7 @@ def updateManagerHours(userid,hours):
     else:
         print("Employee must have worked more than 0 hours.")
         return False
-#Get balance (userid)
+#Get manager hours (userid)
 def getManagerHours(userid):
     sql = "Select hours_worked FROM Managers WHERE userID = "
     mycursor.execute(sql+str(userid))
@@ -129,8 +165,8 @@ def getManagerHours(userid):
 #---------------------------------------Chefs-----------------------------------------------
 #Get all chefs
 def getAllChefs():
-    mycursor.execute("SELECT * FROM Chefs");
-    result = mycursor.fetchall();
+    mycursor.execute("SELECT * FROM Chefs")
+    result = mycursor.fetchall()
     print (result)
     return result
 #Change salary (userid, newsalary)
@@ -173,8 +209,8 @@ def getChefHours(userid):
 #---------------------------------------Delivery-----------------------------------------------
 #Get all delivery
 def getAllDelivery():
-    mycursor.execute("SELECT * FROM Delivery");
-    result = mycursor.fetchall();
+    mycursor.execute("SELECT * FROM Delivery")
+    result = mycursor.fetchall()
     print (result)
     return result
 #Update number of deliveries(userid, numbertoadd)
@@ -236,35 +272,55 @@ def getDeliveryEarnings(userid):
 #---------------------------------------Customers-----------------------------------------------
 #Get all customers
 def getAllCustomers():
-    mycursor.execute("SELECT * FROM Customers");
-    result = mycursor.fetchall();
+    mycursor.execute("SELECT * FROM Customers")
+    result = mycursor.fetchall()
     print (result)
     return result
 #Update balance(userid, changeinbalance,+1or-1)
 def updateBalance(userid,changeinbalance,trans_type):
-    sql = "UPDATE Customers SET balance = balance + %s WHERE userID = %s"
-    val = (trans_type*changeinbalance,userid)
-    mycursor.execute(sql, val)
-    mydb.commit()
+    try:
+        sql = "UPDATE Customers SET balance = balance + %s WHERE userID = %s"
+        val = (trans_type*changeinbalance,userid)
+        mycursor.execute(sql, val)
+        mydb.commit()
+        return True
+    except Exception as e:
+        print(e)
+        return False
 #Get balance (userid)
 def getBalance(userid):
     sql = "Select balance FROM Customers WHERE userID = "
     mycursor.execute(sql+str(userid))
-    result = mycursor.fetchall()
+    result = mycursor.fetchall()[0]
     print (result)
     return result
 #Change address(userid, address)
 def changeAddress(userid,address):
-    sql = "UPDATE Customers SET address = %s WHERE userID = %s"
-    val = (address,userid)
-    mycursor.execute(sql, val)
-    mydb.commit()
+    try:
+        sql = "UPDATE Customers SET address = %s WHERE userID = %s"
+        val = (address,userid)
+        mycursor.execute(sql, val)
+        mydb.commit()
+    except Exception as e:
+        print(e)
+        return False
+#Get address for userid
+def getAddress(userid):
+    sql = "SELECT address FROM Customers WHERE userID = "
+    mycursor.execute(sql+str(userid))
+    result = mycursor.fetchall()[0]
+    print (result)
+    return result
 #Change VIP status (userid, vip)
 def changeVIP(userid,vip):
-    sql = "UPDATE Customers SET VIP_STATUS = %s WHERE userID = %s"
-    val = (vip,userid)
-    mycursor.execute(sql, val)
-    mydb.commit()
+    try:
+        sql = "UPDATE Customers SET VIP_STATUS = %s WHERE userID = %s"
+        val = (vip,userid)
+        mycursor.execute(sql, val)
+        mydb.commit()
+    except Exception as e:
+        print(e)
+        return False
 
 #############################################################################################
 #-----------------------------------------Menu-----------------------------------------------
@@ -274,19 +330,19 @@ def changeVIP(userid,vip):
 def getAllItems():
     mycursor.execute("SELECT * FROM Food")
     result = mycursor.fetchall()
-    print (result)
+    #print (result)
     return result
 #Get all beverages,appetizers,entrees,others
 def getAllOfType(type):
     mycursor.execute("SELECT * FROM Food WHERE itemtype = '%s'" % type)
     result = mycursor.fetchall()
-    print (result)
+    #print (result)
     return result
 #Get item by ID
 def getItem(itemID):
     mycursor.execute("SELECT * FROM Food WHERE item_no = '%s'" % itemID)
     result = mycursor.fetchall()
-    print (result)
+    #print (result)
     return result
 #Add item (id,price,name,description,type,image)
 def addItem(id,price,name,description,type,chef,image):
@@ -330,7 +386,7 @@ def updateRating(id,new_rating):
     val = (tmp_rating,id)
     mycursor.execute(sql,val)
     mydb.commit()
-    print (result)
+    #print (result)
 #Delete item(id)
 def deleteItem(id):
     sql = "DELETE FROM Food WHERE item_no = " + str(id)
@@ -345,31 +401,31 @@ def deleteItem(id):
 def getAllOrders():
     mycursor.execute("SELECT * FROM Orders")
     result = mycursor.fetchall()
-    print (result)
+    #print (result)
     return result
 #Get all incomplete orders
 def getAllIncompleteOrders():
     mycursor.execute("SELECT * FROM Orders WHERE status != 'done'")
     result = mycursor.fetchall()
-    print (result)
+    #print (result)
     return result
 #Get all orders for CustomerID
 def getAllOrdersForCust(id):
     mycursor.execute("SELECT * FROM Orders WHERE customerID = "+str(id))
     result = mycursor.fetchall()
-    print (result)
+    #print (result)
     return result
 #Get all orders for DeliveryID
 def getAllOrdersForDelivery(id):
     mycursor.execute("SELECT * FROM Orders WHERE DeliveryID = "+str(id))
     result = mycursor.fetchall()
-    print (result)
+    #print (result)
     return result
 #Get all items from order
 def getItemsFromOrder(orderid):
     mycursor.execute("SELECT * FROM OrderItems WHERE order_no = "+str(orderid))
     result = mycursor.fetchall()
-    print (result)
+    #print (result)
     return result
 #Create new order (orderid,customerid,arrayof[(item,quantity)])
 def createOrder(orderid,customerid,items):
@@ -400,7 +456,7 @@ def addItemToOrder(order_no,item):
         val = (order_no,item[0],t_price,item[1])
         mycursor.execute(sql, val)
         mydb.commit()
-        return t_price; 
+        return t_price 
     except Exception as e:
         print("Unable to add Item.")
         print(e)
@@ -455,25 +511,121 @@ def addItemsReview(orderID,item_reviews):
             sql = "UPDATE OrderItems SET item_rating = %s, item_review = %s WHERE order_no = %s AND item_no = %s"
             val = (itemRating,itemReview,orderID,itemID)
             mycursor.execute(sql, val)
+            updateRating(itemID,itemRating)
         mydb.commit()
     except Exception as e:
         print ("Failed to add item reviews")
         print(e)
 
+#############################################################################################
+#-----------------------------------------System---------------------------------------------
+#############################################################################################
+#Get all complaints/compliments
+def getAllCompl():
+    mycursor.execute("SELECT * FROM SystemLog")
+    result = mycursor.fetchall()
+    return result;
+#Get all pending complaints/compliments
+def getAllPendingCompl():
+    mycursor.execute("SELECT * FROM SystemLog WHERE status = 0")
+    result = mycursor.fetchall()
+    return result;
+#Get all complaints/compliments filed by user
+def getAllComplbyUser(userid):
+    mycursor.execute("SELECT * FROM SystemLog WHERE reviewer ='%s'" % userid)
+    result = mycursor.fetchall()
+    return result;
+#Get all complaints/compliments against user
+def getAllComplAgainstUser(userid):
+    mycursor.execute("SELECT * FROM SystemLog WHERE id = '%s'" % userid)
+    result = mycursor.fetchall()
+    return result;
+#File complaint/compliment (entry_no,fault_id,reviewer_id,type(+ or -),critique)
+def addCompl(entry_no,defendantID,reviewerID,reviewType,critique):
+    try:
+        sql = "INSERT INTO SystemLog (entry_no,id,reviewer,reviewType,critique,status) VALUES (%s, %s, %s, %s, %s, %s)"
+        val = (entry_no,defendantID,reviewerID,reviewType,critique,0)
+        mycursor.execute(sql, val)
+        mydb.commit()
+        return True
+    except Exception as e:
+        print(e)
+        return False
+#Update complaint/compliment(status); status = 0,1,2 where 0-Pending 1-Accepted 2-Dismissed
+def updateCompl(entry_no,verdict,status):
+    try:
+        sql = "UPDATE SystemLog SET status = %s,verdict = %s WHERE entry_no = %s"
+        val = (status,verdict,entry_no)
+        mycursor.execute(sql, val)
+        if status == 1:
+            mycursor.execute("SELECT id, reviewType FROM SystemLog where entry_no = " + str(entry_no))
+            result = mycursor.fetchone()
+            updateMerit(result[0],result[1])
+        mydb.commit()
+    except Exception as e:
+        print ("Failed to update status")
+        print(e)
 
-#File complaint/compliment (entry_no,fault_id,reviewer_id,type(+ or -),critique,status)
-#Update complaint/compliment(status)
-#Complete complaint/compliment(verdict,id_affected,merit_change(+or-))
-
+#-----------------------------------------Merit---------------------------------------------
+#Get all merit entries
+def getAllMerit():
+    mycursor.execute("SELECT * FROM Merit")
+    result = mycursor.fetchall()
+    return result;
+#Get merit for userID
+def getMeritForID(userID):
+    mycursor.execute("SELECT merit FROM Merit WHERE userID = "+ str(userID))
+    result = mycursor.fetchall()
+    return result;
+#Update Merit Table (userID,value=1,-1)
+def updateMerit(userID,value):
+    sql = "UPDATE Merit SET merit = merit + %s WHERE id = %s"
+    val = (value,userID)
+    mycursor.execute(sql, val)
+    sql = "Select merit FROM Merit WHERE id = " + str(userID)
+    mycursor.execute(sql)
+    result = mycursor.fetchone()[0]
+    if (result <= -3):
+        setFlagforID(userID,1)
+    mydb.commit()
 #---------------------------------------Discussion-----------------------------------------------
 #Create new post (userid,title,body)
-#Add reply(userid,reply)
+def createPost(userid,title,body):
+    try:
+        sql = "INSERT INTO Discussions (id,title,body,replies) VALUES (%s, %s, %s, %s)"
+        val = (userid,title,body,"")
+        mycursor.execute(sql, val)
+        mydb.commit()
+        return True
+    except Exception as e:
+        print(e)
+        return False
+#Add reply(userid,reply,post_no)
+def addReply(userid,post_no,reply):
+    try:
+        sql = "UPDATE Discussions SET replies = CONCAT(replies,%s) WHERE post_no = %s"
+        val = ("<^>"+str(userid)+"//"+reply+"<^>",post_no)
+        print(val)
+        mycursor.execute(sql, val)
+        mydb.commit()
+        return True
+    except Exception as e:
+        print(e)
+        return False
 #Get posts
-#Get posts/replies for userid
+def getPosts():
+    mycursor.execute("SELECT * FROM Discussions")
+    result = mycursor.fetchall()
+    return result;
+#Get replies for post
+def getReplies(post_no):
+    mycursor.execute("SELECT replies FROM Discussions WHERE post_no = "+str(post_no))
+    result = mycursor.fetchone()[0]
+    return result
 #Delete post
-#Delete reply
+def deletePost(post_no):
+    sql = "DELETE FROM Discussions WHERE post_no = " + str(post_no)
+    mycursor.execute(sql)
+    mydb.commit()
 
 
-
-mycursor.close()
-mydb.close()
