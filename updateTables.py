@@ -1,4 +1,3 @@
-from turtle import pos
 import mysql.connector
 from mysqlx import IntegrityError
 
