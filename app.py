@@ -6,7 +6,7 @@ app = Flask(__name__)
 # hardcopy of the user data
 user = "bob"
 pswd = "bobby"
-type = "customer"
+type = "chef"
 name = "Stefan Tan"
 address = "160 Convent Ave, New York, NY"
 currentBalance = 50
@@ -17,11 +17,21 @@ isVIP = True
 def home():
 	if 'username' in session:
 		if type == "customer":
-			return render_template('customer.html', logged = True, username = session['username'])
+			return render_template('customer.html',
+									logged = True, 
+									username = session['username'])
 		elif type == "chef":
-			return render_template('chef.html', logged = True, username = session['username'])
+			menu = ["Pizza", "Sushi"]
+			return render_template('chef.html', 
+									logged = True, 
+									username = session['username'],
+									foods = menu)
 		elif type == "delivery":
-			return render_template('delivery.html', logged = True, username = session['username'])
+			orders = ["Order #1", "Order #2"]
+			return render_template('delivery.html',
+									logged = True, 
+									username = session['username'],
+									orders = orders)
 	else:
 		return render_template('guest.html')
 
@@ -110,6 +120,77 @@ def profile():
 									address = address,
 									warning = warning)
 
+	else:
+		return redirect(url_for('home'))
+
+@app.route("/food/<food>")
+def food(food):
+	#food = "Pizza"
+	chef = "Jack"
+	price = 5
+	rating = 4
+	names = ["John Smith", "Danny Watson", "Willy Wonka"]
+	description = "Lorem ipsum dolor sit, amet consectetur adipisicing elit.  Accusamus numquam assumenda hic aliquam vero sequi velit molestias doloremque molestiae dicta?"
+	if 'username' in session:
+		if type == 'customer':
+			try:
+				newRating = int(request.form['yourRating'])
+				return render_template('food.html',
+										food = food,
+										chef = chef,
+										price = price,
+										rating = newRating,
+										names = names,
+										description = description)
+			except:
+				return render_template('food.html',
+										food = food,
+										chef = chef,
+										price = price,
+										rating = rating,
+										names = names,
+										description = description)
+		else:
+			return render_template('food.html',
+										food = food,
+										chef = chef,
+										price = price,
+										rating = rating,
+										names = names,
+										description = description)
+	else:
+		return redirect(url_for('home'))
+
+@app.route("/forum")
+def forum():
+	users = ["Bob", "Jack", "Jill", "John", "Jane", "Jose", "Jake"]
+	# staff = ["Bob", "Jack", "Jill"]
+	customers = ["John", "Jane", "Jose"]
+	names = ["Jane", "Jose", "Bob"]
+	comments = ["Lorem ipsum dolor sit, amet consectetur adipisicing elit.  Accusamus numquam assumenda hic aliquam vero sequi velit molestias doloremque molestiae dicta?", "Lorem ipsum dolor sit, amet consectetur adipisicing elit.  Accusamus numquam assumenda hic aliquam vero sequi velit molestias doloremque molestiae dicta?", "Lorem ipsum dolor sit, amet consectetur adipisicing elit.  Accusamus numquam assumenda hic aliquam vero sequi velit molestias doloremque molestiae dicta?"]
+	if 'username' in session:
+		if type == 'customer':
+			try:
+				message = request.form['msg']
+				recipient = request.form['recipient']
+				return render_template('forum.html',
+										people = users,
+										names = names)
+			except:
+				return render_template('forum.html',
+										people = users,
+										names = names)
+		elif type == 'delivery' or type == 'chef':
+			try:
+				message = request.form['msg']
+				recipient = request.form['recipient']
+				return render_template('forum.html',
+										people = customers,
+										names = names)
+			except:
+				return render_template('forum.html',
+										people = customers,
+										names = names)
 	else:
 		return redirect(url_for('home'))
 
