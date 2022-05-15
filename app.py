@@ -6,7 +6,7 @@ app = Flask(__name__)
 # hardcopy of the user data
 user = "bob"
 pswd = "bobby"
-type = "chef"
+type = "customer"
 name = "Stefan Tan"
 address = "160 Convent Ave, New York, NY"
 currentBalance = 50
@@ -73,6 +73,7 @@ def register():
 @app.route("/profile", methods=['POST', 'GET'])
 def profile():
 	balance = 50 # test intial balance, balance = currentBalance gets UnboundLocalError: local variable 'currentBalance' referenced before assignment
+	orders = ['ORDER1', "ORDER2", "ORDER3"]
 	if 'username' in session:
 		try:
 			if type == 'customer':
@@ -88,6 +89,7 @@ def profile():
 									role = type, 
 									address = address,
 									warning = warning,
+									orders = orders,
 									balance = balance)
 			else:
 				return render_template('profile.html',
@@ -97,7 +99,8 @@ def profile():
 									name = name,
 									role = type, 
 									address = address,
-									warning = warning)
+									warning = warning,
+									orders = orders)
 
 		except:
 			if type == 'customer':
@@ -109,6 +112,7 @@ def profile():
 									role = type, 
 									address = address,
 									warning = warning,
+									orders = orders,
 									balance = balance)
 			else:
 				return render_template('profile.html',
@@ -118,7 +122,8 @@ def profile():
 									name = name,
 									role = type, 
 									address = address,
-									warning = warning)
+									warning = warning,
+									orders = orders)
 
 	else:
 		return redirect(url_for('home'))
