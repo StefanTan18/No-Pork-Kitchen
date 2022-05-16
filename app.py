@@ -228,6 +228,11 @@ def checkout():
 	items = ['Pizza', 'Sushi']
 	return render_template('checkout.html', items = items)
 
+@app.route("/chefDash")
+def chefDash():
+	orders = [['Pizza', 'Sushi'], ['Pizza', 'Sushi']]
+	return render_template('chefDash.html', orders = orders)
+
 @app.route("/logout")
 def logout():
 	# removes stored data
