@@ -223,6 +223,11 @@ def menu():
 	foodmenu = ['Pizza', 'Sushi']
 	return render_template('menu.html', menu = foodmenu)
 
+@app.route("/checkout")
+def checkout():
+	items = ['Pizza', 'Sushi']
+	return render_template('checkout.html', items = items)
+
 @app.route("/logout")
 def logout():
 	# removes stored data
