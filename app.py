@@ -1,17 +1,17 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 import os
 
-from flaskext.mysql import MySQL
+# from flaskext.mysql import MySQL
 
-import backend
+# import backend
 
 app = Flask(__name__)
-mysql = MySQL()
-app.config['MYSQL_DATABASE_USER'] = 'root'
-app.config['MYSQL_DATABASE_PASSWORD'] = '5326atAT!'
-app.config['MYSQL_DATABASE_DB'] = 'noporkkitchendb'
-app.config['MYSQL_DATABASE_HOST'] = 'localhost'
-mysql.init_app(app)
+# mysql = MySQL()
+# app.config['MYSQL_DATABASE_USER'] = 'root'
+# app.config['MYSQL_DATABASE_PASSWORD'] = '5326atAT!'
+# app.config['MYSQL_DATABASE_DB'] = 'noporkkitchendb'
+# app.config['MYSQL_DATABASE_HOST'] = 'localhost'
+# mysql.init_app(app)
 
 # hardcopy of the user data
 userid = 1
@@ -73,10 +73,10 @@ def register():
 
 		if password == pswdCopy:
 			try:
-				print('Hello')
-				backend.registerSQL(userid, name, address, username, password, role)
-				print('Bye')
-				userid = userid + 1
+				# print('Hello')
+				# backend.registerSQL(userid, name, address, username, password, role)
+				# print('Bye')
+				# userid = userid + 1
 				flash("Registration Complete! Please log in using your credentials.")
 				return render_template('register.html')
 			except:

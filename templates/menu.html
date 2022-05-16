@@ -18,7 +18,23 @@
           <h5 class="card-title">{{food}}</h5>
           <p class="card-text">Price</p>
           <p class="card-text">This is the description.</p>
-          <a href="#" class="btn btn-primary">Add to Cart</a>
+          <div class="form-group text-center">
+            <label for="quantity">Quantity:</label>
+            <select class="form-control" id="quantity">
+              <option>1</option>
+              <option>2</option>
+              <option>3</option>
+              <option>4</option>
+              <option>5</option>
+              <option>6</option>
+              <option>7</option>
+              <option>8</option>
+              <option>9</option>
+            </select>
+            <br>
+            <!-- Submit button -->
+            <button type="submit" class="btn btn-primary">Add to Cart</button>
+          </div>
           <br><br>
     </div>
     {% endfor %}
