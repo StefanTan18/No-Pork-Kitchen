@@ -1,9 +1,20 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 import os
 
+from flaskext.mysql import MySQL
+
+import backend
+
 app = Flask(__name__)
+mysql = MySQL()
+app.config['MYSQL_DATABASE_USER'] = 'root'
+app.config['MYSQL_DATABASE_PASSWORD'] = '5326atAT!'
+app.config['MYSQL_DATABASE_DB'] = 'noporkkitchendb'
+app.config['MYSQL_DATABASE_HOST'] = 'localhost'
+mysql.init_app(app)
 
 # hardcopy of the user data
+userid = 1
 user = "bob"
 pswd = "bobby"
 type = "customer"
@@ -61,8 +72,16 @@ def register():
 		role = request.form['role']
 
 		if password == pswdCopy:
-			flash("Registration Complete! Please log in using your credentials.")
-			return render_template('register.html')
+			try:
+				print('Hello')
+				backend.registerSQL(userid, name, address, username, password, role)
+				print('Bye')
+				userid = userid + 1
+				flash("Registration Complete! Please log in using your credentials.")
+				return render_template('register.html')
+			except:
+				flash("Registration Failed.")
+				return render_template('register.html')
 		else:
 			flash("Passwords do not match.")
 			return render_template('register.html')
@@ -199,6 +218,10 @@ def forum():
 	else:
 		return redirect(url_for('home'))
 
+@app.route("/menu")
+def menu():
+	foodmenu = ['Pizza', 'Sushi']
+	return render_template('menu.html', menu = foodmenu)
 
 @app.route("/logout")
 def logout():

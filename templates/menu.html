@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block head %}<title>Menu</title>{% endblock %}
+
+{% block content %}
+
+<div class = "container">
+    <br>
+    <div class="jumbotron" style="background-color: white; text-align: center; padding-top: 5px; padding-bottom: 5px;">
+        <h1 class="display-4" style="font-size: 250%;">Menu</h1>
+        <hr class="my-4">
+    </div>
+
+    {% for food in menu %}
+    <div class="card mb-3 text-center">
+        <img class="card-img-top" src="..." alt="Food image">
+        <div class="card-body">
+          <h5 class="card-title">{{food}}</h5>
+          <p class="card-text">Price</p>
+          <p class="card-text">This is the description.</p>
+          <a href="#" class="btn btn-primary">Add to Cart</a>
+          <br><br>
+    </div>
+    {% endfor %}
+    
+</div>
+
+{% endblock %}
